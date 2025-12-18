@@ -3,155 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scouting App - Pro</title>
+    <title>Scouting Pro - Bitácora</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f3; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        #reloj { font-size: 50px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #333; }
-        .controles-tiempo { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; padding: 20px; border-radius: 15px; width: 100%; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        #reloj { font-size: 45px; font-weight: bold; text-align: center; margin: 10px 0; color: #1a73e8; }
         
-        .jugador-fila { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .jugador-info { flex: 1; }
-        .nombre { font-weight: bold; font-size: 18px; }
-        .stats { font-size: 14px; color: #666; }
+        .jugador-card { border-bottom: 1px solid #eee; padding: 15px 0; }
+        .nombre { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .botones-agrupados { display: flex; gap: 8px; }
         
-        button { border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-plus { background-color: #3498db; color: white; padding: 10px 15px; font-size: 18px; }
-        .btn-minus { background-color: #ecf0f1; color: #7f8c8d; padding: 5px 10px; margin-left: 5px; }
-        .btn-timer { padding: 10px 20px; background-color: #2ecc71; color: white; }
-        .btn-pdf { background-color: #e74c3c; color: white; width: 100%; padding: 15px; margin-top: 20px; font-size: 16px; }
+        button { border: none; border-radius: 6px; padding: 12px; font-weight: bold; cursor: pointer; }
+        .btn-shot { background: #34a853; color: white; flex: 1; }
+        .btn-turnover { background: #fbbc05; color: white; flex: 1; }
+        .btn-timer { background: #1a73e8; color: white; padding: 10px 30px; }
         
-        /* Estilo para el PDF (invisible en la web) */
-        #reporte-invisible { display: none; color: black; padding: 40px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        /* Estilos del Modal (Ventanita) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; width: 80%; max-width: 300px; }
+        
+        #reporte-invisible { display: none; padding: 30px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="reloj">00:00</div>
-    <div class="controles-tiempo">
-        <button id="btnPlay" class="btn-timer" onclick="toggleTiempo()">Iniciar</button>
-        <button style="background:#95a5a6; color:white;" onclick="resetearTodo()">Reset</button>
+    <div style="text-align:center; margin-bottom:20px;">
+        <button class="btn-timer" onclick="toggleTiempo()" id="btnPlay">Iniciar Partido</button>
+        <button style="background:#ddd" onclick="resetearTodo()">Reset</button>
     </div>
 
-    <div id="lista-jugadores">
-        </div>
+    <div id="lista-jugadores"></div>
 
-    <button class="btn-pdf" onclick="generarReporte()">Finalizar Partido y Descargar PDF</button>
+    <button style="background:#ea4335; color:white; width:100%; margin-top:20px; padding:15px;" onclick="generarReporte()">FINALIZAR Y DESCARGAR PDF</button>
+</div>
+
+<div id="modalTiro" class="modal">
+    <div class="modal-content">
+        <h3>¿Resultado del tiro?</h3>
+        <button style="background:#34a853; color:white; width:100%; margin-bottom:10px; padding:15px;" onclick="registrarTiro(true)">¡GOL / CONVERTIDO!</button>
+        <button style="background:#ea4335; color:white; width:100%; padding:15px;" onclick="registrarTiro(false)">ERRADO</button>
+        <br><br>
+        <button style="background:#999; color:white;" onclick="cerrarModal()">Cancelar</button>
+    </div>
 </div>
 
 <div id="reporte-invisible">
-    <h1 id="pdf-titulo">Reporte de Estadísticas</h1>
+    <h1 id="pdf-titulo">Reporte Estadístico Detallado</h1>
     <p id="pdf-fecha"></p>
-    <table>
-        <thead>
-            <tr>
-                <th>Jugador</th>
-                <th>Puntos</th>
-                <th>Faltas</th>
-            </tr>
-        </thead>
-        <tbody id="pdf-tabla-cuerpo"></tbody>
-    </table>
+    <div id="pdf-bitacora">
+        <h3>Bitácora de Eventos (Tiempo Real)</h3>
+        <table id="tabla-eventos">
+            <thead><tr><th>Tiempo</th><th>Jugador</th><th>Acción</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
     let jugadores = [
-        { id: 0, nombre: "Jugador 1", puntos: 0, faltas: 0 },
-        { id: 1, nombre: "Jugador 2", puntos: 0, faltas: 0 },
-        { id: 2, nombre: "Jugador 3", puntos: 0, faltas: 0 },
-        { id: 3, nombre: "Jugador 4", puntos: 0, faltas: 0 },
-        { id: 4, nombre: "Jugador 5", puntos: 0, faltas: 0 }
+        { id: 0, nombre: "Jugador 1", goles: 0, errados: 0, perdidas: 0 },
+        { id: 1, nombre: "Jugador 2", goles: 0, errados: 0, perdidas: 0 },
+        { id: 2, nombre: "Jugador 3", goles: 0, errados: 0, perdidas: 0 }
     ];
-
+    let bitacora = [];
     let segundos = 0;
     let corriendo = false;
     let intervalo;
+    let jugadorSeleccionado = null;
 
     window.onload = () => {
-        const guardado = localStorage.getItem("stats_partido");
+        const guardado = localStorage.getItem("scouting_data");
         if(guardado) {
             const data = JSON.parse(guardado);
             jugadores = data.jugadores;
             segundos = data.segundos;
+            bitacora = data.bitacora || [];
             actualizarReloj();
         }
-        dibujarJugadores();
+        dibujar();
     };
 
-    function dibujarJugadores() {
+    function dibujar() {
         const lista = document.getElementById("lista-jugadores");
         lista.innerHTML = "";
         jugadores.forEach(j => {
             lista.innerHTML += `
-                <div class="jugador-fila">
-                    <div class="jugador-info">
-                        <div class="nombre">${j.nombre}</div>
-                        <div class="stats">Pts: ${j.puntos} | Faltas: ${j.faltas}</div>
+                <div class="jugador-card">
+                    <div class="nombre">${j.nombre} <small>(G: ${j.goles} | E: ${j.errados} | P: ${j.perdidas})</small></div>
+                    <div class="botones-agrupados">
+                        <button class="btn-shot" onclick="abrirModalTiro(${j.id})">LANZAMIENTO</button>
+                        <button class="btn-turnover" onclick="registrarPerdida(${j.id})">PÉRDIDA</button>
                     </div>
-                    <div>
-                        <button class="btn-plus" onclick="modificar(${j.id}, 'puntos', 1)">+ Pts</button>
-                        <button class="btn-plus" style="background:#f39c12" onclick="modificar(${j.id}, 'faltas', 1)">+ Falta</button>
-                    </div>
-                </div>
-            `;
+                </div>`;
         });
-        localStorage.setItem("stats_partido", JSON.stringify({jugadores, segundos}));
-    }
-
-    function modificar(id, campo, valor) {
-        jugadores[id][campo] += valor;
-        dibujarJugadores();
+        localStorage.setItem("scouting_data", JSON.stringify({jugadores, segundos, bitacora}));
     }
 
     function toggleTiempo() {
+        corriendo = !corriendo;
         if(corriendo) {
+            intervalo = setInterval(() => { segundos++; actualizarReloj(); }, 1000);
+            document.getElementById("btnPlay").innerText = "Pausar";
+        } else {
             clearInterval(intervalo);
             document.getElementById("btnPlay").innerText = "Reanudar";
-        } else {
-            intervalo = setInterval(() => {
-                segundos++;
-                actualizarReloj();
-                localStorage.setItem("stats_partido", JSON.stringify({jugadores, segundos}));
-            }, 1000);
-            document.getElementById("btnPlay").innerText = "Pausar";
         }
-        corriendo = !corriendo;
     }
 
     function actualizarReloj() {
-        let m = Math.floor(segundos / 60);
-        let s = segundos % 60;
+        let m = Math.floor(segundos / 60); let s = segundos % 60;
         document.getElementById("reloj").innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    function resetearTodo() {
-        if(confirm("¿Borrar todo?")) {
-            localStorage.clear();
-            location.reload();
-        }
+    // Lógica de Lanzamientos
+    function abrirModalTiro(id) { jugadorSeleccionado = id; document.getElementById("modalTiro").style.display = "flex"; }
+    function cerrarModal() { document.getElementById("modalTiro").style.display = "none"; }
+
+    function registrarTiro(entro) {
+        const j = jugadores[jugadorSeleccionado];
+        const tiempoActual = document.getElementById("reloj").innerText;
+        if(entro) { j.goles++; } else { j.errados++; }
+        bitacora.push({ tiempo: tiempoActual, nombre: j.nombre, accion: entro ? "Gol" : "Tiro Errado" });
+        cerrarModal(); dibujar();
+    }
+
+    function registrarPerdida(id) {
+        const j = jugadores[id];
+        const tiempoActual = document.getElementById("reloj").innerText;
+        j.perdidas++;
+        bitacora.push({ tiempo: tiempoActual, nombre: j.nombre, accion: "Pérdida de balón" });
+        dibujar();
     }
 
     function generarReporte() {
-        const cuerpo = document.getElementById("pdf-tabla-cuerpo");
         document.getElementById("pdf-fecha").innerText = "Fecha: " + new Date().toLocaleString();
-        cuerpo.innerHTML = "";
-        
-        jugadores.forEach(j => {
-            cuerpo.innerHTML += `<tr><td>${j.nombre}</td><td>${j.puntos}</td><td>${j.faltas}</td></tr>`;
+        const tbody = document.querySelector("#tabla-eventos tbody");
+        tbody.innerHTML = "";
+        // Invertimos la bitácora para que lo último aparezca primero si quieres, o normal:
+        bitacora.forEach(e => {
+            tbody.innerHTML += `<tr><td>${e.tiempo}</td><td>${e.nombre}</td><td>${e.accion}</td></tr>`;
         });
-
-        const element = document.getElementById('reporte-invisible');
-        element.style.display = "block";
         
-        html2pdf().from(element).save('Partido.pdf').then(() => {
-            element.style.display = "none";
-        });
+        const el = document.getElementById("reporte-invisible");
+        el.style.display = "block";
+        html2pdf().from(el).save("Scouting_Partido.pdf").then(() => el.style.display = "none");
     }
+
+    function resetearTodo() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
