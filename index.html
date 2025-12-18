@@ -1,44 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Estadísticas de Papá</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas Pro - Papá</title>
     <style>
-        /* CSS: Para que los botones se vean bien en una tablet */
-        body { font-family: sans-serif; text-align: center; }
-        .boton-sumar { font-size: 20px; padding: 20px; background: green; color: white; }
-        #reloj { font-size: 50px; font-weight: bold; }
+        body { font-family: sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        #reloj { font-size: 60px; font-weight: bold; color: #2c3e50; margin: 20px 0; }
+        .puntos-box { font-size: 40px; color: #e74c3c; font-weight: bold; }
+        button { font-size: 18px; padding: 15px 25px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-start { background-color: #27ae60; color: white; }
+        .btn-sumar { background-color: #2980b9; color: white; width: 80%; }
+        .btn-reset { background-color: #95a5a6; color: white; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <h1>Partido en Vivo</h1>
-    <div id="reloj">00:00</div>
-    <button onclick="iniciarCronometro()">Iniciar Tiempo</button>
+    <div class="card">
+        <h2>Partido en Vivo</h2>
+        
+        <div id="reloj">00:00</div>
+        <button id="btnControl" class="btn-start" onclick="toggleCronometro()">Iniciar Tiempo</button>
 
-    <hr>
+        <hr>
 
-    <h3>Jugador 1: Juan</h3>
-    <p>Puntos: <span id="puntos-juan">0</span></p>
-    <button class="boton-sumar" onclick="sumarPunto()">+ Anotar Punto</button>
+        <h3>Jugador: Juan</h3>
+        <div class="puntos-box" id="displayPuntos">0</div>
+        <button class="btn-sumar" onclick="sumarPunto()">+ PUNTO</button>
+
+        <br><br>
+        <button class="btn-reset" onclick="resetearPartido()">Resetear Todo</button>
+    </div>
 
     <script>
-        // JAVASCRIPT: La lógica de tu programa
-        let puntos = 0;
+        // Variables de estado
         let segundos = 0;
+        let puntos = 0;
+        let intervalo;
+        let corriendo = false;
+
+        // 1. CARGAR DATOS AL INICIAR
+        window.onload = function() {
+            if (localStorage.getItem("segundos_guardados")) {
+                segundos = parseInt(localStorage.getItem("segundos_guardados"));
+                puntos = parseInt(localStorage.getItem("puntos_guardados"));
+                actualizarPantalla();
+            }
+        };
+
+        function actualizarPantalla() {
+            // Actualizar Reloj
+            let min = Math.floor(segundos / 60);
+            let seg = segundos % 60;
+            document.getElementById("reloj").innerText = 
+                (min < 10 ? "0" : "") + min + ":" + (seg < 10 ? "0" : "") + seg;
+            
+            // Actualizar Puntos
+            document.getElementById("displayPuntos").innerText = puntos;
+        }
+
+        function toggleCronometro() {
+            if (corriendo) {
+                clearInterval(intervalo);
+                document.getElementById("btnControl").innerText = "Reanudar Tiempo";
+            } else {
+                intervalo = setInterval(() => {
+                    segundos++;
+                    actualizarPantalla();
+                    // Guardamos el tiempo cada segundo
+                    localStorage.setItem("segundos_guardados", segundos);
+                }, 1000);
+                document.getElementById("btnControl").innerText = "Pausar Tiempo";
+            }
+            corriendo = !corriendo;
+        }
 
         function sumarPunto() {
             puntos++;
-            document.getElementById("puntos-juan").innerText = puntos;
+            actualizarPantalla();
+            // Guardamos los puntos cada vez que cambian
+            localStorage.setItem("puntos_guardados", puntos);
         }
 
-        function iniciarCronometro() {
-            setInterval(() => {
-                segundos++;
-                let min = Math.floor(segundos / 60);
-                let seg = segundos % 60;
-                document.getElementById("reloj").innerText = 
-                    (min < 10 ? "0" : "") + min + ":" + (seg < 10 ? "0" : "") + seg;
-            }, 1000);
+        function resetearPartido() {
+            if (confirm("¿Seguro que quieres borrar los datos del partido actual?")) {
+                clearInterval(intervalo);
+                corriendo = false;
+                segundos = 0;
+                puntos = 0;
+                localStorage.clear(); // Borra la memoria del navegador
+                actualizarPantalla();
+                document.getElementById("btnControl").innerText = "Iniciar Tiempo";
+            }
         }
     </script>
 </body>
