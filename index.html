@@ -2,225 +2,218 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scouting Elite - Control Total</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Handball Scouting Pro v4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 20px; border-radius: 15px; width: 95%; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        body { font-family: sans-serif; background: #1a1c2c; color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; }
         
-        /* Marcador Superior */
-        .scoreboard { display: flex; justify-content: space-around; align-items: center; background: #2c3e50; color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .score-box { text-align: center; }
-        .score-box h4 { margin: 0; font-size: 12px; text-transform: uppercase; color: #bdc3c7; }
-        .score-num { font-size: 35px; font-weight: bold; }
-        #reloj { font-size: 40px; font-weight: bold; text-align: center; color: #1a73e8; margin-bottom: 15px; }
+        .header { display: flex; justify-content: space-between; background: #333652; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #4b4e6d; }
+        #reloj { font-size: 32px; font-weight: bold; font-family: monospace; color: #ffeb3b; }
+        .score { font-size: 20px; font-weight: bold; }
 
-        /* Jugadores */
-        .jugador-card { border-bottom: 1px solid #eee; padding: 12px 0; }
-        .nombre { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
-        .botones-agrupados { display: flex; gap: 5px; }
-        
-        button { border: none; border-radius: 6px; padding: 10px; font-weight: bold; cursor: pointer; }
-        .btn-shot { background: #2ecc71; color: white; flex: 2; }
-        .btn-turnover { background: #f39c12; color: white; flex: 1; }
-        .btn-rival { background: #95a5a6; color: white; padding: 5px 15px; font-size: 12px; margin-top: 5px; }
-        
-        /* Modal y PDF */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; text-align: center; width: 85%; max-width: 300px; }
-        
-        #reporte-invisible { display: none; padding: 40px; color: black; background: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
-        th, td { border: 1px solid #000; padding: 8px; text-align: center; }
-        .resumen-box { border: 1px solid #000; padding: 15px; margin-bottom: 20px; background: #f9f9f9; }
+        .main-actions { display: flex; gap: 15px; margin-bottom: 20px; }
+        .btn-main { flex: 1; padding: 35px 10px; font-size: 22px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px #999; }
+        .btn-main:active { box-shadow: 0 0 #999; transform: translateY(4px); }
+        .btn-lanzamiento { background: #27ae60; color: white; }
+        .btn-perdida { background: #f39c12; color: white; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+        .grid-jugadores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; }
+        .btn-jugador { background: #4a90e2; color: white; padding: 20px 5px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; }
+
+        /* El Arco */
+        .arco-container { display: grid; grid-template-columns: repeat(3, 90px); grid-template-rows: repeat(3, 70px); gap: 8px; background: #eee; padding: 15px; border: 8px solid #fff; border-bottom: none; border-radius: 5px 5px 0 0; }
+        .zona-arco { background: #fff; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; font-size: 20px; }
+        .btn-fuera { background: #e74c3c; color: white; width: 286px; padding: 20px; border: none; font-weight: bold; font-size: 18px; border-radius: 0 0 10px 10px; margin-top: 2px; }
+
+        .modal-title { margin-bottom: 20px; font-size: 24px; color: #fff; }
+        #reporte-invisible { display: none; background: white; color: black; padding: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="scoreboard">
-        <div class="score-box">
-            <h4>NOSOTROS</h4>
-            <div class="score-num" id="pts-nosotros">0</div>
-        </div>
+    <div class="header">
+        <div class="score">NOS: <span id="pts-nos">0</span></div>
         <div id="reloj">00:00</div>
-        <div class="score-box">
-            <h4>RIVAL</h4>
-            <div class="score-num" id="pts-rival">0</div>
-            <button class="btn-rival" onclick="cambiarPuntosRival(1)">+ GOL</button>
-            <button class="btn-rival" style="background:#c0392b" onclick="cambiarPuntosRival(-1)">-</button>
-        </div>
+        <div class="score">RIV: <span id="pts-riv">0</span></div>
     </div>
 
-    <div style="text-align:center; margin-bottom:20px;">
-        <button style="background:#1a73e8; color:white; padding:10px 20px;" onclick="toggleTiempo()" id="btnPlay">Iniciar Partido</button>
-        <button style="background:#ddd; padding:10px;" onclick="resetearTodo()">Reset</button>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+        <button id="btnPlay" onclick="toggleTiempo()" style="background:#fff; color:#000; border-radius:5px; padding:8px 15px; font-weight:bold;">INICIAR TIEMPO</button>
+        <button onclick="cambiarRival(1)" style="background:#e74c3c; color:white; border-radius:5px; padding:8px 15px; font-weight:bold;">+ GOL RIVAL</button>
     </div>
 
-    <div id="lista-jugadores"></div>
+    <div class="main-actions">
+        <button class="btn-main btn-lanzamiento" onclick="abrirPaso1('TIRO')">Lanzamiento</button>
+        <button class="btn-main btn-perdida" onclick="abrirPaso1('PERDIDA')">Pérdida</button>
+    </div>
 
-    <button style="background:#ea4335; color:white; width:100%; margin-top:20px; padding:15px; font-size:16px;" onclick="generarReporte()">FINALIZAR Y DESCARGAR REPORTE PDF</button>
+    <button onclick="generarReporte()" style="width:100%; padding:15px; background:transparent; color:#aaa; border:1px solid #aaa; border-radius:10px; font-size: 14px; margin-top: 10px;">FINALIZAR Y EXPORTAR PDF</button>
 </div>
 
-<div id="modalTiro" class="modal">
-    <div class="modal-content">
-        <h3>¿Lanzamiento?</h3>
-        <button style="background:#2ecc71; color:white; width:100%; margin-bottom:10px; padding:15px;" onclick="registrarTiro(true)">¡CONVERTIDO!</button>
-        <button style="background:#e74c3c; color:white; width:100%; padding:15px;" onclick="registrarTiro(false)">FALLIDO</button>
-        <br><br>
-        <button style="background:#999; color:white;" onclick="cerrarModal()">Cancelar</button>
+<div id="modalJugadores" class="overlay">
+    <h2 class="modal-title">¿Quién fue?</h2>
+    <div class="grid-jugadores" id="grilla-jugadores"></div>
+    <button onclick="cerrarModales()" style="background:none; color:white; border:1px solid white; margin-top:30px; padding:10px 30px; border-radius:5px;">Cancelar</button>
+</div>
+
+<div id="modalArco" class="overlay">
+    <h2 class="modal-title">Zona del Lanzamiento</h2>
+    <div class="arco-container">
+        <div class="zona-arco" onclick="seleccionarZona(1)">1</div>
+        <div class="zona-arco" onclick="seleccionarZona(2)">2</div>
+        <div class="zona-arco" onclick="seleccionarZona(3)">3</div>
+        <div class="zona-arco" onclick="seleccionarZona(4)">4</div>
+        <div class="zona-arco" onclick="seleccionarZona(5)">5</div>
+        <div class="zona-arco" onclick="seleccionarZona(6)">6</div>
+        <div class="zona-arco" onclick="seleccionarZona(7)">7</div>
+        <div class="zona-arco" onclick="seleccionarZona(8)">8</div>
+        <div class="zona-arco" onclick="seleccionarZona(9)">9</div>
+    </div>
+    <button class="btn-fuera" onclick="finalizarTiroFuera()">FUERA / PALO</button>
+    
+    <div id="opciones-gol" style="display:none; margin-top:20px; gap:20px;">
+        <button onclick="finalizarTiroGol(true)" style="background:#27ae60; color:white; padding:20px 40px; border:none; border-radius:10px; font-size:20px; font-weight:bold;">¡GOL!</button>
+        <button onclick="finalizarTiroGol(false)" style="background:#f1c40f; color:black; padding:20px 40px; border:none; border-radius:10px; font-size:20px; font-weight:bold;">ATAJADO</button>
     </div>
 </div>
 
 <div id="reporte-invisible">
-    <h1 style="text-align:center">Reporte de Scouting</h1>
-    <p id="pdf-fecha" style="text-align:center"></p>
-    
-    <div class="resumen-box">
-        <h3>1. Resumen Colectivo</h3>
-        <p><b>Marcador Final:</b> Nosotros <span id="res-nos">0</span> - <span id="res-riv">0</span> Rival</p>
-        <p><b>Total Lanzamientos:</b> <span id="res-tiros">0</span></p>
-        <p><b>Total Goles:</b> <span id="res-goles">0</span></p>
-        <p><b>Total Errados:</b> <span id="res-err">0</span></p>
-        <p><b>Total Pérdidas:</b> <span id="res-per">0</span></p>
-        <p><b>Efectividad de Tiro:</b> <span id="res-efec">0</span>%</p>
-    </div>
-
-    <h3>2. Estadística Individual</h3>
-    <table id="tabla-individual">
-        <thead>
-            <tr><th>Jugador</th><th>Goles</th><th>Errados</th><th>Pérdidas</th></tr>
-        </thead>
+    <h1 style="text-align:center">Reporte Estadístico Handball</h1>
+    <div id="pdf-resumen-general"></div>
+    <h3>Detalle de Jugadores</h3>
+    <table id="pdf-tabla-jugadores">
+        <thead><tr><th>Jugador</th><th>Goles</th><th>Errados/Atajados</th><th>Pérdidas</th><th>Efectividad</th></tr></thead>
         <tbody></tbody>
     </table>
-
-    <h3>3. Bitácora de Eventos</h3>
-    <table id="tabla-bitacora">
-        <thead><tr><th>Tiempo</th><th>Jugador</th><th>Acción</th></tr></thead>
+    <h3>Historial del Partido</h3>
+    <table id="pdf-tabla-historial">
+        <thead><tr><th>Tiempo</th><th>Jugador</th><th>Acción</th><th>Zona</th></tr></thead>
         <tbody></tbody>
     </table>
 </div>
 
 <script>
-    let jugadores = [
-        { id: 0, nombre: "Jugador 1", goles: 0, errados: 0, perdidas: 0 },
-        { id: 1, nombre: "Jugador 2", goles: 0, errados: 0, perdidas: 0 },
-        { id: 2, nombre: "Jugador 3", goles: 0, errados: 0, perdidas: 0 },
-        { id: 3, nombre: "Jugador 4", goles: 0, errados: 0, perdidas: 0 },
-        { id: 4, nombre: "Jugador 5", goles: 0, errados: 0, perdidas: 0 }
-    ];
-    let puntosRival = 0;
-    let bitacora = [];
-    let segundos = 0;
-    let corriendo = false;
-    let intervalo;
-    let jugSeleccionado = null;
+    let jugadores = Array.from({length: 16}, (_, i) => ({ id: i+1, n: "N° "+(i+1), g: 0, e: 0, p: 0 }));
+    let bitacora = [], puntosRival = 0, segundos = 0, corriendo = false, intervalo;
+    let accionPendiente = null, jugadorActual = null, zonaActual = null;
 
     window.onload = () => {
-        const d = JSON.parse(localStorage.getItem("scouting_v3"));
-        if(d) {
-            jugadores = d.jugadores; segundos = d.segundos; 
-            bitacora = d.bitacora; puntosRival = d.puntosRival || 0;
-            actualizarReloj();
-        }
-        dibujar();
+        const grid = document.getElementById("grilla-jugadores");
+        jugadores.forEach(j => {
+            grid.innerHTML += `<button class="btn-jugador" onclick="seleccionarJugador(${j.id})">${j.n}</button>`;
+        });
+        actualizarMarcador();
     };
 
-    function dibujar() {
-        const lista = document.getElementById("lista-jugadores");
-        lista.innerHTML = "";
-        let ptsNosotros = 0;
-        
-        jugadores.forEach(j => {
-            ptsNosotros += j.goles;
-            lista.innerHTML += `
-                <div class="jugador-card">
-                    <div class="nombre">${j.nombre} <small>(G:${j.goles} E:${j.errados} P:${j.perdidas})</small></div>
-                    <div class="botones-agrupados">
-                        <button class="btn-shot" onclick="abrirModal(${j.id})">LANZAMIENTO</button>
-                        <button class="btn-turnover" onclick="regPerdida(${j.id})">PÉRDIDA</button>
-                    </div>
-                </div>`;
-        });
-
-        document.getElementById("pts-nosotros").innerText = ptsNosotros;
-        document.getElementById("pts-rival").innerText = puntosRival;
-        localStorage.setItem("scouting_v3", JSON.stringify({jugadores, segundos, bitacora, puntosRival}));
+    function abrirPaso1(tipo) { 
+        accionPendiente = tipo; 
+        document.getElementById("modalJugadores").style.display = "flex"; 
     }
 
-    function cambiarPuntosRival(v) { puntosRival = Math.max(0, puntosRival + v); dibujar(); }
+    function seleccionarJugador(id) {
+        jugadorActual = jugadores.find(j => j.id === id);
+        if (accionPendiente === 'PERDIDA') {
+            jugadorActual.p++;
+            registrar("Pérdida", "-");
+            cerrarModales();
+        } else {
+            document.getElementById("modalJugadores").style.display = "none";
+            document.getElementById("modalArco").style.display = "flex";
+            document.getElementById("opciones-gol").style.display = "none";
+        }
+    }
+
+    function seleccionarZona(z) {
+        zonaActual = z;
+        document.getElementById("opciones-gol").style.display = "flex";
+    }
+
+    function finalizarTiroFuera() {
+        jugadorActual.e++;
+        registrar("Fuera/Palo", "Fuera");
+        cerrarModales();
+    }
+
+    function finalizarTiroGol(esGol) {
+        esGol ? jugadorActual.g++ : jugadorActual.e++;
+        registrar(esGol ? "GOL" : "Atajado", "Zona " + zonaActual);
+        cerrarModales();
+    }
+
+    function registrar(acc, zona) {
+        const t = document.getElementById("reloj").innerText;
+        bitacora.push({ t, n: jugadorActual.n, acc, zona });
+        actualizarMarcador();
+        localStorage.setItem("handball_v4", JSON.stringify({jugadores, bitacora, segundos, puntosRival}));
+    }
+
+    function cerrarModales() {
+        document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
+        zonaActual = null;
+    }
+
+    function actualizarMarcador() {
+        let total = jugadores.reduce((s, j) => s + j.g, 0);
+        document.getElementById("pts-nos").innerText = total;
+        document.getElementById("pts-riv").innerText = puntosRival;
+    }
+
+    function cambiarRival(v) { puntosRival = Math.max(0, puntosRival + v); actualizarMarcador(); }
+
     function toggleTiempo() {
         corriendo = !corriendo;
         if(corriendo) {
-            intervalo = setInterval(() => { segundos++; actualizarReloj(); }, 1000);
-            document.getElementById("btnPlay").innerText = "Pausar";
+            intervalo = setInterval(() => {
+                segundos++;
+                let m = Math.floor(segundos/60), s = segundos%60;
+                document.getElementById("reloj").innerText = `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+            }, 1000);
+            document.getElementById("btnPlay").innerText = "PAUSAR";
         } else {
             clearInterval(intervalo);
-            document.getElementById("btnPlay").innerText = "Reanudar";
+            document.getElementById("btnPlay").innerText = "REANUDAR";
         }
-    }
-    function actualizarReloj() {
-        let m = Math.floor(segundos / 60); let s = segundos % 60;
-        document.getElementById("reloj").innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-    }
-
-    function abrirModal(id) { jugSeleccionado = id; document.getElementById("modalTiro").style.display = "flex"; }
-    function cerrarModal() { document.getElementById("modalTiro").style.display = "none"; }
-
-    function registrarTiro(entro) {
-        const j = jugadores[jugSeleccionado];
-        const t = document.getElementById("reloj").innerText;
-        entro ? j.goles++ : j.errados++;
-        bitacora.push({ t, n: j.nombre, a: entro ? "Gol" : "Tiro Errado" });
-        cerrarModal(); dibujar();
-    }
-
-    function regPerdida(id) {
-        const j = jugadores[id];
-        const t = document.getElementById("reloj").innerText;
-        j.perdidas++;
-        bitacora.push({ t, n: j.nombre, a: "Pérdida" });
-        dibujar();
     }
 
     function generarReporte() {
-        document.getElementById("pdf-fecha").innerText = "Emitido: " + new Date().toLocaleString();
-        
-        // Calcular Totales Colectivos
-        let tGoles = 0, tErr = 0, tPer = 0;
-        jugadores.forEach(j => { tGoles += j.goles; tErr += j.errados; tPer += j.perdidas; });
-        let totalTiros = tGoles + tErr;
-        let efectividad = totalTiros > 0 ? ((tGoles / totalTiros) * 100).toFixed(1) : 0;
+        const resumen = document.getElementById("pdf-resumen-general");
+        let totalG = jugadores.reduce((s, j) => s + j.g, 0);
+        let totalE = jugadores.reduce((s, j) => s + j.e, 0);
+        let totalP = jugadores.reduce((s, j) => s + j.p, 0);
+        let efec = (totalG + totalE) > 0 ? ((totalG / (totalG + totalE)) * 100).toFixed(1) : 0;
 
-        // Rellenar Resumen
-        document.getElementById("res-nos").innerText = tGoles;
-        document.getElementById("res-riv").innerText = puntosRival;
-        document.getElementById("res-tiros").innerText = totalTiros;
-        document.getElementById("res-goles").innerText = tGoles;
-        document.getElementById("res-err").innerText = tErr;
-        document.getElementById("res-per").innerText = tPer;
-        document.getElementById("res-efec").innerText = efectividad;
+        resumen.innerHTML = `
+            <div style="background:#f4f4f4; padding:15px; border-radius:10px; margin-bottom:20px;">
+                <p><b>MARCADOR:</b> Nosotros ${totalG} - ${puntosRival} Rival</p>
+                <p><b>EFECTIVIDAD COLECTIVA:</b> ${efec}%</p>
+                <p><b>TOTAL PÉRDIDAS:</b> ${totalP}</p>
+            </div>`;
 
-        // Rellenar Tablas
-        const tbInd = document.querySelector("#tabla-individual tbody");
-        tbInd.innerHTML = "";
+        const tJug = document.querySelector("#pdf-tabla-jugadores tbody");
+        tJug.innerHTML = "";
         jugadores.forEach(j => {
-            tbInd.innerHTML += `<tr><td>${j.nombre}</td><td>${j.goles}</td><td>${j.errados}</td><td>${j.perdidas}</td></tr>`;
+            if(j.g > 0 || j.e > 0 || j.p > 0) {
+                let eJ = (j.g + j.e) > 0 ? ((j.g / (j.g + j.e)) * 100).toFixed(0) : 0;
+                tJug.innerHTML += `<tr><td>${j.n}</td><td>${j.g}</td><td>${j.e}</td><td>${j.p}</td><td>${eJ}%</td></tr>`;
+            }
         });
 
-        const tbBit = document.querySelector("#tabla-bitacora tbody");
-        tbBit.innerHTML = "";
-        bitacora.forEach(e => {
-            tbBit.innerHTML += `<tr><td>${e.t}</td><td>${e.n}</td><td>${e.a}</td></tr>`;
+        const tHist = document.querySelector("#pdf-tabla-historial tbody");
+        tHist.innerHTML = "";
+        bitacora.forEach(h => {
+            tHist.innerHTML += `<tr><td>${h.t}</td><td>${h.n}</td><td>${h.acc}</td><td>${h.zona}</td></tr>`;
         });
 
         const el = document.getElementById("reporte-invisible");
         el.style.display = "block";
-        html2pdf().from(el).save("Reporte_Partido.pdf").then(() => el.style.display = "none");
+        html2pdf().from(el).set({ margin: 0.5, filename: 'Reporte_Handball.pdf', html2canvas: { scale: 2 } }).save().then(() => el.style.display = "none");
     }
-
-    function resetearTodo() { if(confirm("¿Eliminar partido actual?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
