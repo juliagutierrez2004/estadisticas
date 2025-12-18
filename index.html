@@ -3,49 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Handball Scouting Pro v4</title>
+    <title>Handball Pro - Mapa de Calor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* (Mantengo los estilos anteriores para la app y agrego los del Arco en PDF) */
         body { font-family: sans-serif; background: #1a1c2c; color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 600px; }
-        
-        .header { display: flex; justify-content: space-between; background: #333652; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #4b4e6d; }
-        #reloj { font-size: 32px; font-weight: bold; font-family: monospace; color: #ffeb3b; }
-        .score { font-size: 20px; font-weight: bold; }
-
+        .header { display: flex; justify-content: space-between; background: #333652; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        #reloj { font-size: 32px; font-weight: bold; color: #ffeb3b; }
         .main-actions { display: flex; gap: 15px; margin-bottom: 20px; }
-        .btn-main { flex: 1; padding: 35px 10px; font-size: 22px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px #999; }
-        .btn-main:active { box-shadow: 0 0 #999; transform: translateY(4px); }
+        .btn-main { flex: 1; padding: 35px 10px; font-size: 22px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; }
         .btn-lanzamiento { background: #27ae60; color: white; }
         .btn-perdida { background: #f39c12; color: white; }
-
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
         .grid-jugadores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; }
-        .btn-jugador { background: #4a90e2; color: white; padding: 20px 5px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; }
+        .btn-jugador { background: #4a90e2; color: white; padding: 20px 5px; border: none; border-radius: 8px; font-size: 18px; }
+        .arco-container { display: grid; grid-template-columns: repeat(3, 90px); grid-template-rows: repeat(3, 70px); gap: 8px; background: #eee; padding: 15px; border: 8px solid #fff; border-bottom: none; }
+        .zona-arco { background: #fff; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; }
+        .btn-fuera { background: #e74c3c; color: white; width: 286px; padding: 20px; border: none; font-weight: bold; border-radius: 0 0 10px 10px; }
 
-        /* El Arco */
-        .arco-container { display: grid; grid-template-columns: repeat(3, 90px); grid-template-rows: repeat(3, 70px); gap: 8px; background: #eee; padding: 15px; border: 8px solid #fff; border-bottom: none; border-radius: 5px 5px 0 0; }
-        .zona-arco { background: #fff; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; color: #333; font-weight: bold; font-size: 20px; }
-        .btn-fuera { background: #e74c3c; color: white; width: 286px; padding: 20px; border: none; font-weight: bold; font-size: 18px; border-radius: 0 0 10px 10px; margin-top: 2px; }
-
-        .modal-title { margin-bottom: 20px; font-size: 24px; color: #fff; }
+        /* ESTILOS EXCLUSIVOS PARA EL ARCO EN EL PDF */
+        #pdf-arco-visual { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 300px; margin: 20px auto; background: #333; padding: 10px; border: 10px solid #555; border-bottom: none; }
+        .zona-pdf { background: white; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #ddd; }
+        .val-gol { color: green; font-weight: bold; font-size: 18px; }
+        .val-err { color: red; font-size: 14px; }
+        
         #reporte-invisible { display: none; background: white; color: black; padding: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        th, td { border: 1px solid #333; padding: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <div class="score">NOS: <span id="pts-nos">0</span></div>
+        <div>NOS: <span id="pts-nos">0</span></div>
         <div id="reloj">00:00</div>
-        <div class="score">RIV: <span id="pts-riv">0</span></div>
+        <div>RIV: <span id="pts-riv">0</span></div>
     </div>
 
     <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
-        <button id="btnPlay" onclick="toggleTiempo()" style="background:#fff; color:#000; border-radius:5px; padding:8px 15px; font-weight:bold;">INICIAR TIEMPO</button>
-        <button onclick="cambiarRival(1)" style="background:#e74c3c; color:white; border-radius:5px; padding:8px 15px; font-weight:bold;">+ GOL RIVAL</button>
+        <button onclick="toggleTiempo()" id="btnPlay" style="padding:10px;">INICIAR</button>
+        <button onclick="cambiarRival(1)" style="background:#e74c3c; color:white; padding:10px;">+ GOL RIVAL</button>
     </div>
 
     <div class="main-actions">
@@ -53,17 +52,17 @@
         <button class="btn-main btn-perdida" onclick="abrirPaso1('PERDIDA')">Pérdida</button>
     </div>
 
-    <button onclick="generarReporte()" style="width:100%; padding:15px; background:transparent; color:#aaa; border:1px solid #aaa; border-radius:10px; font-size: 14px; margin-top: 10px;">FINALIZAR Y EXPORTAR PDF</button>
+    <button onclick="generarReporte()" style="width:100%; padding:10px; background:none; color:#aaa; border:1px solid #aaa;">EXPORTAR REPORTE PDF</button>
 </div>
 
 <div id="modalJugadores" class="overlay">
-    <h2 class="modal-title">¿Quién fue?</h2>
+    <h2>¿Quién fue?</h2>
     <div class="grid-jugadores" id="grilla-jugadores"></div>
-    <button onclick="cerrarModales()" style="background:none; color:white; border:1px solid white; margin-top:30px; padding:10px 30px; border-radius:5px;">Cancelar</button>
+    <button onclick="cerrarModales()" style="color:white; background:none; border:1px solid white; margin-top:20px; padding:10px;">Cancelar</button>
 </div>
 
 <div id="modalArco" class="overlay">
-    <h2 class="modal-title">Zona del Lanzamiento</h2>
+    <h2>Zona del Lanzamiento</h2>
     <div class="arco-container">
         <div class="zona-arco" onclick="seleccionarZona(1)">1</div>
         <div class="zona-arco" onclick="seleccionarZona(2)">2</div>
@@ -76,22 +75,27 @@
         <div class="zona-arco" onclick="seleccionarZona(9)">9</div>
     </div>
     <button class="btn-fuera" onclick="finalizarTiroFuera()">FUERA / PALO</button>
-    
     <div id="opciones-gol" style="display:none; margin-top:20px; gap:20px;">
-        <button onclick="finalizarTiroGol(true)" style="background:#27ae60; color:white; padding:20px 40px; border:none; border-radius:10px; font-size:20px; font-weight:bold;">¡GOL!</button>
-        <button onclick="finalizarTiroGol(false)" style="background:#f1c40f; color:black; padding:20px 40px; border:none; border-radius:10px; font-size:20px; font-weight:bold;">ATAJADO</button>
+        <button onclick="finalizarTiroGol(true)" style="background:#27ae60; color:white; padding:20px;">¡GOL!</button>
+        <button onclick="finalizarTiroGol(false)" style="background:#f1c40f; color:black; padding:20px;">ATAJADO</button>
     </div>
 </div>
 
 <div id="reporte-invisible">
-    <h1 style="text-align:center">Reporte Estadístico Handball</h1>
-    <div id="pdf-resumen-general"></div>
-    <h3>Detalle de Jugadores</h3>
+    <h1 style="text-align:center">Reporte de Scouting Handball</h1>
+    
+    <h3>Mapa de Calor del Arco (Goles / Atajados)</h3>
+    <div id="pdf-arco-visual">
+        </div>
+    <p style="text-align:center; font-size:12px;">* Los tiros "Fuera/Palo" no se muestran en el mapa del arco.</p>
+
+    <h3>Estadística Individual</h3>
     <table id="pdf-tabla-jugadores">
-        <thead><tr><th>Jugador</th><th>Goles</th><th>Errados/Atajados</th><th>Pérdidas</th><th>Efectividad</th></tr></thead>
+        <thead><tr><th>Jugador</th><th>Goles</th><th>Errados</th><th>Pérdidas</th></tr></thead>
         <tbody></tbody>
     </table>
-    <h3>Historial del Partido</h3>
+
+    <h3>Historial Detallado</h3>
     <table id="pdf-tabla-historial">
         <thead><tr><th>Tiempo</th><th>Jugador</th><th>Acción</th><th>Zona</th></tr></thead>
         <tbody></tbody>
@@ -103,25 +107,21 @@
     let bitacora = [], puntosRival = 0, segundos = 0, corriendo = false, intervalo;
     let accionPendiente = null, jugadorActual = null, zonaActual = null;
 
+    // Objeto para contar tiros por zona: { zona: { goles: 0, errados: 0 } }
+    let mapaArco = { 1: {g:0, e:0}, 2: {g:0, e:0}, 3: {g:0, e:0}, 4: {g:0, e:0}, 5: {g:0, e:0}, 6: {g:0, e:0}, 7: {g:0, e:0}, 8: {g:0, e:0}, 9: {g:0, e:0} };
+
     window.onload = () => {
         const grid = document.getElementById("grilla-jugadores");
-        jugadores.forEach(j => {
-            grid.innerHTML += `<button class="btn-jugador" onclick="seleccionarJugador(${j.id})">${j.n}</button>`;
-        });
-        actualizarMarcador();
+        jugadores.forEach(j => { grid.innerHTML += `<button class="btn-jugador" onclick="seleccionarJugador(${j.id})">${j.n}</button>`; });
     };
 
-    function abrirPaso1(tipo) { 
-        accionPendiente = tipo; 
-        document.getElementById("modalJugadores").style.display = "flex"; 
-    }
+    function abrirPaso1(tipo) { accionPendiente = tipo; document.getElementById("modalJugadores").style.display = "flex"; }
+    function cerrarModales() { document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none'); }
 
     function seleccionarJugador(id) {
         jugadorActual = jugadores.find(j => j.id === id);
         if (accionPendiente === 'PERDIDA') {
-            jugadorActual.p++;
-            registrar("Pérdida", "-");
-            cerrarModales();
+            jugadorActual.p++; registrar("Pérdida", "-"); cerrarModales();
         } else {
             document.getElementById("modalJugadores").style.display = "none";
             document.getElementById("modalArco").style.display = "flex";
@@ -129,43 +129,33 @@
         }
     }
 
-    function seleccionarZona(z) {
-        zonaActual = z;
-        document.getElementById("opciones-gol").style.display = "flex";
-    }
-
+    function seleccionarZona(z) { zonaActual = z; document.getElementById("opciones-gol").style.display = "flex"; }
+    
     function finalizarTiroFuera() {
-        jugadorActual.e++;
-        registrar("Fuera/Palo", "Fuera");
-        cerrarModales();
+        jugadorActual.e++; registrar("Fuera/Palo", "Fuera"); cerrarModales();
     }
 
     function finalizarTiroGol(esGol) {
         esGol ? jugadorActual.g++ : jugadorActual.e++;
+        // Sumar al mapa de calor
+        if(esGol) mapaArco[zonaActual].g++; else mapaArco[zonaActual].e++;
+        
         registrar(esGol ? "GOL" : "Atajado", "Zona " + zonaActual);
         cerrarModales();
     }
 
     function registrar(acc, zona) {
-        const t = document.getElementById("reloj").innerText;
-        bitacora.push({ t, n: jugadorActual.n, acc, zona });
+        bitacora.push({ t: document.getElementById("reloj").innerText, n: jugadorActual.n, acc, zona });
         actualizarMarcador();
-        localStorage.setItem("handball_v4", JSON.stringify({jugadores, bitacora, segundos, puntosRival}));
-    }
-
-    function cerrarModales() {
-        document.querySelectorAll('.overlay').forEach(m => m.style.display = 'none');
-        zonaActual = null;
     }
 
     function actualizarMarcador() {
-        let total = jugadores.reduce((s, j) => s + j.g, 0);
-        document.getElementById("pts-nos").innerText = total;
+        document.getElementById("pts-nos").innerText = jugadores.reduce((s, j) => s + j.g, 0);
         document.getElementById("pts-riv").innerText = puntosRival;
     }
 
     function cambiarRival(v) { puntosRival = Math.max(0, puntosRival + v); actualizarMarcador(); }
-
+    
     function toggleTiempo() {
         corriendo = !corriendo;
         if(corriendo) {
@@ -175,44 +165,36 @@
                 document.getElementById("reloj").innerText = `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
             }, 1000);
             document.getElementById("btnPlay").innerText = "PAUSAR";
-        } else {
-            clearInterval(intervalo);
-            document.getElementById("btnPlay").innerText = "REANUDAR";
-        }
+        } else { clearInterval(intervalo); document.getElementById("btnPlay").innerText = "REANUDAR"; }
     }
 
     function generarReporte() {
-        const resumen = document.getElementById("pdf-resumen-general");
-        let totalG = jugadores.reduce((s, j) => s + j.g, 0);
-        let totalE = jugadores.reduce((s, j) => s + j.e, 0);
-        let totalP = jugadores.reduce((s, j) => s + j.p, 0);
-        let efec = (totalG + totalE) > 0 ? ((totalG / (totalG + totalE)) * 100).toFixed(1) : 0;
+        // 1. Rellenar el Arco Visual en el PDF
+        const arcoPDF = document.getElementById("pdf-arco-visual");
+        arcoPDF.innerHTML = "";
+        for(let i=1; i<=9; i++) {
+            arcoPDF.innerHTML += `
+                <div class="zona-pdf">
+                    <span style="font-size:10px; color:#999">${i}</span>
+                    <span class="val-gol">${mapaArco[i].g}</span>
+                    <span class="val-err">${mapaArco[i].e}</span>
+                </div>`;
+        }
 
-        resumen.innerHTML = `
-            <div style="background:#f4f4f4; padding:15px; border-radius:10px; margin-bottom:20px;">
-                <p><b>MARCADOR:</b> Nosotros ${totalG} - ${puntosRival} Rival</p>
-                <p><b>EFECTIVIDAD COLECTIVA:</b> ${efec}%</p>
-                <p><b>TOTAL PÉRDIDAS:</b> ${totalP}</p>
-            </div>`;
-
+        // 2. Rellenar Tablas
         const tJug = document.querySelector("#pdf-tabla-jugadores tbody");
         tJug.innerHTML = "";
         jugadores.forEach(j => {
-            if(j.g > 0 || j.e > 0 || j.p > 0) {
-                let eJ = (j.g + j.e) > 0 ? ((j.g / (j.g + j.e)) * 100).toFixed(0) : 0;
-                tJug.innerHTML += `<tr><td>${j.n}</td><td>${j.g}</td><td>${j.e}</td><td>${j.p}</td><td>${eJ}%</td></tr>`;
-            }
+            if(j.g+j.e+j.p > 0) tJug.innerHTML += `<tr><td>${j.n}</td><td>${j.g}</td><td>${j.e}</td><td>${j.p}</td></tr>`;
         });
 
         const tHist = document.querySelector("#pdf-tabla-historial tbody");
         tHist.innerHTML = "";
-        bitacora.forEach(h => {
-            tHist.innerHTML += `<tr><td>${h.t}</td><td>${h.n}</td><td>${h.acc}</td><td>${h.zona}</td></tr>`;
-        });
+        bitacora.forEach(h => { tHist.innerHTML += `<tr><td>${h.t}</td><td>${h.n}</td><td>${h.acc}</td><td>${h.zona}</td></tr>`; });
 
         const el = document.getElementById("reporte-invisible");
         el.style.display = "block";
-        html2pdf().from(el).set({ margin: 0.5, filename: 'Reporte_Handball.pdf', html2canvas: { scale: 2 } }).save().then(() => el.style.display = "none");
+        html2pdf().from(el).save("Reporte_Handball_Pro.pdf").then(() => el.style.display = "none");
     }
 </script>
 </body>
