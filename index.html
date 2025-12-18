@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Estadísticas de Papá</title>
+    <style>
+        /* CSS: Para que los botones se vean bien en una tablet */
+        body { font-family: sans-serif; text-align: center; }
+        .boton-sumar { font-size: 20px; padding: 20px; background: green; color: white; }
+        #reloj { font-size: 50px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Partido en Vivo</h1>
+    <div id="reloj">00:00</div>
+    <button onclick="iniciarCronometro()">Iniciar Tiempo</button>
+
+    <hr>
+
+    <h3>Jugador 1: Juan</h3>
+    <p>Puntos: <span id="puntos-juan">0</span></p>
+    <button class="boton-sumar" onclick="sumarPunto()">+ Anotar Punto</button>
+
+    <script>
+        // JAVASCRIPT: La lógica de tu programa
+        let puntos = 0;
+        let segundos = 0;
+
+        function sumarPunto() {
+            puntos++;
+            document.getElementById("puntos-juan").innerText = puntos;
+        }
+
+        function iniciarCronometro() {
+            setInterval(() => {
+                segundos++;
+                let min = Math.floor(segundos / 60);
+                let seg = segundos % 60;
+                document.getElementById("reloj").innerText = 
+                    (min < 10 ? "0" : "") + min + ":" + (seg < 10 ? "0" : "") + seg;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
